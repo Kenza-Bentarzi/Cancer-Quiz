@@ -3,84 +3,106 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>لوحة الإدارة - كنزة</title>
+    <title>لوحة الإدارة - كنزة 🎗️</title>
     <style>
         body {
             font-family: sans-serif;
             background: #2c3e50;
             color: white;
+            padding: 20px;
             text-align: center;
+        }
+
+        .controls {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
         }
 
         .btn {
             padding: 15px 30px;
-            font-size: 20px;
+            font-size: 18px;
             margin: 10px;
             cursor: pointer;
-            border-radius: 10px;
             border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
         }
 
-        .start {
+        .next {
             background: #27ae60;
-            color: white;
         }
 
         .reset {
-            background: #c0392b;
-            color: white;
+            background: #e74c3c;
         }
 
-        #results-list {
+        #leaderboard {
             background: white;
-            color: black;
-            max-width: 600px;
-            margin: 20px auto;
+            color: #333;
             padding: 20px;
             border-radius: 10px;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .user-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
     </style>
 </head>
 
 <body>
-    <h1>التحكم في المسابقة 🎗️</h1>
-    <button class="btn start" onclick="nextQuestion()">السؤال التالي ➡️</button>
-    <button class="btn reset" onclick="resetGame()">تصفير المسابقة 🔄</button>
-
-    <div id="results-list">
-        <h3>قائمة النتائج الحالية:</h3>
-        <div id="data-container">انتظار البيانات...</div>
+    <h1>لوحة التحكم في المسابقة 🎗️</h1>
+    <div class="controls">
+        <h2 id="status">جاهزة للبدء</h2>
+        <button class="btn next" onclick="triggerNext()">السؤال التالي ➡️</button>
+        <button class="btn reset" onclick="resetAll()">تصفير المسابقة بالكامل 🔄</button>
+    </div>
+    <div id="leaderboard">
+        <h3>قائمة المتسابقات الحالية:</h3>
+        <div id="users-list">انتظار دخول المتسابقات...</div>
     </div>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
         let currentStep = -1;
 
-        async function nextQuestion() {
+        async function triggerNext() {
             currentStep++;
             await fetch(`${dbURL}gameState.json`, {
                 method: 'PUT',
-                body: JSON.stringify({ started: true, currentStep: currentStep })
+                body: JSON.stringify({ started: true, currentStep: currentStep, reset: false })
             });
-            alert("تم إرسال السؤال " + (currentStep + 1));
+            document.getElementById('status').innerText = `جاري عرض السؤال رقم: ${currentStep + 1}`;
         }
 
-        async function resetGame() {
-            await fetch(`${dbURL}.json`, { method: 'DELETE' });
-            currentStep = -1;
-            alert("تم مسح جميع البيانات والبدء من جديد");
+        async function resetAll() {
+            if (confirm("هل أنتِ متأكدة؟")) {
+                await fetch(`${dbURL}.json`, { method: 'DELETE' });
+                await fetch(`${dbURL}gameState.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ started: false, currentStep: -1, reset: true })
+                });
+                location.reload();
+            }
         }
 
-        // تحديث النتائج حياً
         setInterval(async () => {
             const res = await fetch(`${dbURL}results.json`);
             const data = await res.json();
-            const container = document.getElementById('data-container');
-            if (!data) { container.innerHTML = "لا يوجد متسابقون حالياً"; return; }
-            container.innerHTML = "";
-            for (let user in data) {
-                container.innerHTML += `<p><strong>${user}</strong>: ${data[user].score} نقطة</p>`;
-            }
+            const list = document.getElementById('users-list');
+            if (!data) { list.innerHTML = "لا يوجد متسابقات حالياً"; return; }
+            list.innerHTML = "";
+            const sorted = Object.entries(data).sort((a, b) => b[1].score - a[1].score);
+            sorted.forEach(([name, info]) => {
+                list.innerHTML += `<div class="user-row"><span>${name}</span><span><strong>${info.score} نقطة</strong></span></div>`;
+            });
         }, 3000);
     </script>
 </body>
