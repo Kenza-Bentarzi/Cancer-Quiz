@@ -3,188 +3,85 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم الاحترافية 🎗️</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+    <title>لوحة الإدارة - كنزة</title>
     <style>
-        /* سأحتفظ بنفس الـ CSS الرائع الخاص بكِ مع إضافة بعض الأزرار */
-        :root {
-            --bg: #2d0031;
-            --card: #4a0e4e;
-            --accent-pink: #ffb6c1;
-            --gold: #ffd700;
-        }
-
         body {
-            background: var(--bg);
+            font-family: sans-serif;
+            background: #2c3e50;
             color: white;
-            font-family: 'Cairo', sans-serif;
             text-align: center;
-            padding: 20px;
-            margin: 0;
         }
 
-        .control-panel {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 15px;
-            max-width: 800px;
-            margin: 20px auto;
-            border: 2px solid #5d1461;
-        }
-
-        .q-btn {
-            background: #6b7280;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            margin: 5px;
-            border-radius: 8px;
+        .btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            margin: 10px;
             cursor: pointer;
-        }
-
-        .q-btn.active {
-            background: var(--accent-pink);
-            color: var(--bg);
-        }
-
-        .timer-display {
-            font-size: 2.5rem;
-            color: var(--gold);
-            margin: 10px 0;
-        }
-
-        .btn-action {
-            background: #22c55e;
-            color: white;
-            border: none;
-            padding: 10px 20px;
             border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            margin: 5px;
+            border: none;
         }
 
-        .player-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 85%;
-            max-width: 550px;
-            background: var(--card);
-            padding: 15px;
-            border-radius: 15px;
-            margin: 10px auto;
-            border-right: 8px solid var(--accent-pink);
+        .start {
+            background: #27ae60;
+            color: white;
         }
 
-        .team-a {
-            border-right-color: #3b82f6;
+        .reset {
+            background: #c0392b;
+            color: white;
         }
 
-        /* لون أزرق للفريق أ */
-        .team-b {
-            border-right-color: #ef4444;
+        #results-list {
+            background: white;
+            color: black;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
         }
-
-        /* لون أحمر للفريق ب */
     </style>
 </head>
 
 <body>
+    <h1>التحكم في المسابقة 🎗️</h1>
+    <button class="btn start" onclick="nextQuestion()">السؤال التالي ➡️</button>
+    <button class="btn reset" onclick="resetGame()">تصفير المسابقة 🔄</button>
 
-    <h1>لوحة تحكم المسابقة الحية 🎗️</h1>
-
-    <div class="control-panel">
-        <h3>التحكم بالأسئلة</h3>
-        <div id="questionButtons">
-        </div>
-
-        <div class="timer-display" id="timer">01:00</div>
-
-        <button class="btn-action" onclick="startTimer()">بدء الوقت (دقيقة) ⏱️</button>
-        <button class="btn-action" style="background:#3b82f6" onclick="showCorrectAnswer()">إظهار الإجابة الصحيحة
-            ✅</button>
-    </div>
-
-    <div id="leaderboard" class="container">
-        <h3>نتائج الفرق الحية</h3>
+    <div id="results-list">
+        <h3>قائمة النتائج الحالية:</h3>
+        <div id="data-container">انتظار البيانات...</div>
     </div>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
-        let currentTimer;
+        let currentStep = -1;
 
-        // توليد 10 أزرار للأسئلة
-        const btnContainer = document.getElementById('questionButtons');
-        for (let i = 1; i <= 10; i++) {
-            btnContainer.innerHTML += `<button class="q-btn" id="q${i}" onclick="setQuestion(${i})">سؤال ${i}</button>`;
-        }
-
-        function setQuestion(num) {
-            // تحديث رقم السؤال الحالي في Firebase
-            fetch(dbURL + "gameState.json", {
-                method: 'PATCH',
-                body: JSON.stringify({
-                    currentQuestion: num,
-                    canAnswer: true,
-                    showCorrect: false
-                })
+        async function nextQuestion() {
+            currentStep++;
+            await fetch(`${dbURL}gameState.json`, {
+                method: 'PUT',
+                body: JSON.stringify({ started: true, currentStep: currentStep })
             });
-
-            // تمييز الزر المختار
-            document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('q' + num).classList.add('active');
-            resetTimerDisplay();
+            alert("تم إرسال السؤال " + (currentStep + 1));
         }
 
-        function startTimer() {
-            let timeLeft = 60;
-            clearInterval(currentTimer);
-            currentTimer = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' + timeLeft : timeLeft}`;
-
-                if (timeLeft <= 0) {
-                    clearInterval(currentTimer);
-                    lockAnswers();
-                }
-            }, 1000);
+        async function resetGame() {
+            await fetch(`${dbURL}.json`, { method: 'DELETE' });
+            currentStep = -1;
+            alert("تم مسح جميع البيانات والبدء من جديد");
         }
 
-        function lockAnswers() {
-            fetch(dbURL + "gameState.json", { method: 'PATCH', body: JSON.stringify({ canAnswer: false }) });
-            alert("انتهى الوقت! تم غلق الإجابات.");
-        }
-
-        function showCorrectAnswer() {
-            fetch(dbURL + "gameState.json", { method: 'PATCH', body: JSON.stringify({ showCorrect: true }) });
-        }
-
-        function updateLeaderboard() {
-            fetch(dbURL + "results.json").then(r => r.json()).then(data => {
-                let board = document.getElementById('leaderboard');
-                if (!data) return;
-
-                board.innerHTML = "";
-                Object.values(data).forEach(p => {
-                    board.innerHTML += `
-                    <div class="player-row ${p.team === 'A' ? 'team-a' : 'team-b'}">
-                        <div style="text-align:right">
-                            <span><b>[فريق ${p.team}] ${p.name}</b></span>
-                            <br><small>اختار: ${p.lastAns || 'لم يجب بعد'}</small>
-                        </div>
-                        <div style="font-size:25px; color:var(--gold)">${p.score} ن</div>
-                    </div>`;
-                });
-            });
-        }
-
-        function resetTimerDisplay() {
-            clearInterval(currentTimer);
-            document.getElementById('timer').innerText = "01:00";
-        }
-
-        setInterval(updateLeaderboard, 2000);
+        // تحديث النتائج حياً
+        setInterval(async () => {
+            const res = await fetch(`${dbURL}results.json`);
+            const data = await res.json();
+            const container = document.getElementById('data-container');
+            if (!data) { container.innerHTML = "لا يوجد متسابقون حالياً"; return; }
+            container.innerHTML = "";
+            for (let user in data) {
+                container.innerHTML += `<p><strong>${user}</strong>: ${data[user].score} نقطة</p>`;
+            }
+        }, 3000);
     </script>
 </body>
 
