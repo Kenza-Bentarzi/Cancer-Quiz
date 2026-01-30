@@ -1,216 +1,196 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحدي أكتوبر الوردي 🎗️</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>Quiz Inscription 🎗️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --pink: #e91e63;
-            --bg: #fff5f8;
-        }
-
+        /* إعدادات الخلفية الطبية الثابتة */
         body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--bg);
             margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: url('bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            background: white;
-            width: 90%;
-            max-width: 400px;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.15);
-            text-align: center;
-        }
-
-        .option {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            margin: 12px 0;
-            border: 2px solid #fce4ec;
-            border-radius: 12px;
-            background: white;
-            cursor: pointer;
-            transition: 0.3s;
-            font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        .option.selected {
-            background: var(--pink) !important;
-            color: white;
-            border-color: var(--pink);
-        }
-
-        .option:disabled {
-            cursor: not-allowed;
-            opacity: 0.8;
-        }
-
-        #timer-bar {
-            width: 100%;
-            height: 8px;
-            background: #eee;
-            border-radius: 4px;
-            margin-bottom: 20px;
             overflow: hidden;
         }
 
-        #progress {
+        /* طبقة حماية بصرية بنفسجية */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: var(--pink);
-            transition: 1s linear;
+            background: rgba(42, 8, 69, 0.4);
+            z-index: 0;
         }
 
-        h1 {
-            color: var(--pink);
+        /* البطاقة الزجاجية (Glassmorphism) */
+        .glass-card {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 30px;
+            padding: 40px;
+            width: 85%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        h2 {
             font-size: 24px;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
+        /* خانة إدخال الاسم */
         input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #fce4ec;
-            border-radius: 10px;
-            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 20px;
+            outline: none;
             box-sizing: border-box;
         }
 
+        /* زر الدخول المتوهج */
         .btn-main {
-            background: var(--pink);
+            background: linear-gradient(45deg, #e91e63, #9c27b0);
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 50px;
             width: 100%;
-            font-weight: bold;
+            font-size: 18px;
+            font-weight: 700;
             cursor: pointer;
+            transition: 0.4s;
+            box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
+            text-transform: uppercase;
+        }
+
+        .btn-main:hover {
+            transform: scale(1.03);
+            box-shadow: 0 12px 25px rgba(233, 30, 99, 0.6);
+        }
+
+        /* تنسيق الأسئلة والخيارات */
+        .q-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .opt-btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin: 12px 0;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 15px;
+        }
+
+        .opt-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .opt-btn.selected {
+            background: #e91e63 !important;
+            border-color: white;
+            font-weight: bold;
+        }
+
+        /* شريط الوقت السفلي */
+        .timer-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            width: 100%;
+            height: 100%;
+            background: #ffeb3b;
+            transition: 1s linear;
         }
     </style>
 </head>
 
 <body>
-    <div class="container" id="app">
-        <div id="login-screen">
-            <h1>🎗️ سجلّي اسمكِ</h1>
-            <input type="text" id="username" placeholder="اكتبي اسمكِ هنا...">
-            <button class="btn-main" onclick="register()">دخول المسابقة</button>
-        </div>
+    <div class="overlay"></div>
 
-        <div id="quiz-screen" style="display:none;">
-            <div id="timer-bar">
-                <div id="progress"></div>
-            </div>
-            <h3 id="q-text" style="color: #333;"></h3>
-            <div id="options-container"></div>
-        </div>
+    <div class="glass-card" id="login-box">
+        <h2>Inscription</h2>
+        <input type="text" id="username" placeholder="Nom de l'équipe..." autocomplete="off">
+        <button class="btn-main" onclick="joinGame()">REJOINDRE</button>
+    </div>
 
-        <div id="waiting-screen" style="display:none;">
-            <h2 id="wait-msg" style="color: var(--pink);">انتظري إشارة البدء...</h2>
-            <p>سيبدأ السؤال التالي قريباً</p>
+    <div class="glass-card" id="quiz-box" style="display:none;">
+        <div class="timer-bar">
+            <div id="progress" class="progress"></div>
         </div>
+        <div class="q-title" id="question-text">Attente du début...</div>
+        <div id="options-container"></div>
     </div>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
-        let user = "", score = 0, lastStep = -1, timer;
-        const questions = [
-            { q: "ما هو السن الموصى به للماموغرافيا؟", opts: ["20 سنة", "30 سنة", "40 سنة", "50 سنة"], c: 2 },
-            { q: "أفضل غذاء للوقاية؟", opts: ["الحلويات", "الخضروات الورقية", "المقليات", "المعلبات"], c: 1 },
-            { q: "عدد مرات الفحص الذاتي شهرياً؟", opts: ["مرة واحدة", "مرتين", "أربع مرات", "لا يهم"], c: 0 },
-            { q: "اللون العالمي للتوعية؟", opts: ["أزرق", "أحمر", "وردي", "أصفر"], c: 2 },
-            { q: "هل الرياضة تقلل الخطر؟", opts: ["لا", "نعم بالتأكيد", "قليلاً", "فقط للمحترفين"], c: 1 },
-            { q: "شهر التوعية العالمي؟", opts: ["جانفي", "جوان", "أكتوبر", "ديسمبر"], c: 2 },
-            { q: "أول خطوة عند الشك؟", opts: ["الانتظار", "الطبيب فوراً", "الأعشاب", "التجاهل"], c: 1 },
-            { q: "وسيلة الكشف الأدق؟", opts: ["اللمس فقط", "الماموغرافيا", "النظر", "الوزن"], c: 1 },
-            { q: "نسبة الشفاء بالكشف المبكر؟", opts: ["90%", "10%", "50%", "لا توجد"], c: 0 },
-            { q: "شعار الأمل والتحدي هو؟", opts: ["أكتوبر الوردي", "القوة", "الحياة", "نحن معكِ"], c: 0 }
-        ];
+        let currentUsername = "";
 
-        async function register() {
-            user = document.getElementById('username').value.trim();
-            if (!user) return alert("من فضلكِ اكتبي اسمكِ");
-            await fetch(`${dbURL}players/${user}.json`, { method: 'PUT', body: JSON.stringify({ score: 0, lastUpdate: Date.now() }) });
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('waiting-screen').style.display = 'block';
-            listen();
-        }
+        async function joinGame() {
+            const name = document.getElementById('username').value.trim();
+            if (!name) return alert("Entrez votre nom!");
+            currentUsername = name;
 
-        function listen() {
-            setInterval(async () => {
-                const r = await fetch(`${dbURL}state.json`);
-                const s = await r.json();
-                if (s && s.step > lastStep) {
-                    lastStep = s.step;
-                    if (lastStep < 10) showQ(lastStep);
-                    else showEnd();
-                } else if (s && s.reset) location.reload();
-            }, 2000);
-        }
-
-        function showQ(idx) {
-            document.getElementById('waiting-screen').style.display = 'none';
-            document.getElementById('quiz-screen').style.display = 'block';
-            const q = questions[idx];
-            document.getElementById('q-text').innerText = q.q;
-            const container = document.getElementById('options-container');
-            container.innerHTML = "";
-            q.opts.forEach((o, i) => {
-                container.innerHTML += `<button class="option" onclick="answer(${idx}, ${i}, this)">${o}</button>`;
+            // تسجيل اللاعب في Firebase
+            await fetch(`${dbURL}players/${name}.json`, {
+                method: 'PUT',
+                body: JSON.stringify({ score: 0, lastSeen: Date.now() })
             });
-            startTimer();
+
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('quiz-box').style.display = 'block';
+            startSync();
+            startHeartbeat();
         }
 
-        function startTimer() {
-            let left = 60;
-            const bar = document.getElementById('progress');
-            bar.style.width = "100%";
-            clearInterval(timer);
-            timer = setInterval(() => {
-                left--;
-                bar.style.width = (left / 60) * 100 + "%";
-                if (left <= 0) {
-                    clearInterval(timer);
-                    disableAll();
-                    setTimeout(() => {
-                        document.getElementById('quiz-screen').style.display = 'none';
-                        document.getElementById('waiting-screen').style.display = 'block';
-                    }, 2000);
-                }
-            }, 1000);
+        // إرسال إشارة "أنا متصل" كل 5 ثوانٍ للآدمن
+        function startHeartbeat() {
+            setInterval(() => {
+                fetch(`${dbURL}players/${currentUsername}/lastSeen.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify(Date.now())
+                });
+            }, 5000);
         }
 
-        function disableAll() {
-            const btns = document.querySelectorAll('.option');
-            btns.forEach(b => b.disabled = true);
-        }
-
-        async function answer(qIdx, oIdx, btn) {
-            clearInterval(timer);
-            disableAll();
-            btn.classList.add('selected');
-            if (oIdx === questions[qIdx].c) score += 10;
-            await fetch(`${dbURL}players/${user}.json`, { method: 'PATCH', body: JSON.stringify({ score: score, lastUpdate: Date.now() }) });
-            setTimeout(() => {
-                document.getElementById('quiz-screen').style.display = 'none';
-                document.getElementById('waiting-screen').style.display = 'block';
-            }, 1000);
-        }
-
-        function showEnd() {
-            document.getElementById('app').innerHTML = `<h1>🎉 انتهى التحدي</h1><h3>نقاطكِ: ${score}</h3><p>شكراً لوعيكِ 🎗️</p>`;
+        function startSync() {
+            // كود المزامنة مع الأسئلة (سأكمله لكِ في الجزء التقني)
+            console.log("Sync started for: " + currentUsername);
         }
     </script>
 </body>

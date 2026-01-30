@@ -1,76 +1,164 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
-    <title>شاشة الجمهور 🎗️</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
+    <title>Grand Écran - Challenge Médical 🎗️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #ad1457 0%, #d81b60 100%);
-            color: white;
-            font-family: 'Cairo', sans-serif;
-            text-align: center;
-            padding: 40px;
-            min-height: 100vh;
             margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: url('jj.jpg') no-repeat center center fixed;
+            /* خلفية الفضاء المختارة */
+            background-size: cover;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
         }
 
-        #timer {
-            font-size: 150px;
-            color: #ffeb3b;
-            font-weight: bold;
-            margin: 10px;
-            text-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        /* اللوغو في أقصى اليسار العلوي */
+        .logo-left {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 3px solid #9c27b0;
+            box-shadow: 0 0 25px rgba(156, 39, 176, 0.6);
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.3);
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(15px);
-            padding: 50px;
+        /* رمز الشريط البنفسجي في الزاوية اليمنى السفلية */
+        .ribbon-decor {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            filter: drop-shadow(0 0 15px #9c27b0);
+            animation: pulse 2s infinite;
+        }
+
+        /* شاشة الترحيب: النص في المنتصف بشكل منظم */
+        #welcome-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            transition: 1s ease-in-out;
+        }
+
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 50px 70px;
             border-radius: 40px;
-            border: 5px solid white;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(156, 39, 176, 0.3);
+            text-align: center;
+            max-width: 850px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .welcome-msg {
+            font-size: 36px;
+            /* حجم منظم وراقي */
+            font-weight: 700;
+            color: white;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        .welcome-sub {
+            font-size: 22px;
+            color: #e1bee7;
+            letter-spacing: 3px;
+            font-weight: 400;
+            text-transform: uppercase;
+        }
+
+        /* واجهة المسابقة (مخفية في البداية) */
+        #quiz-interface {
+            opacity: 0;
+            transition: 1s;
+            display: none;
+        }
+
+        /* العداد الدائري الكبير في المنتصف */
+        .timer-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 40px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-svg {
+            transform: rotate(-90deg);
+            width: 350px;
+            height: 350px;
+        }
+
+        .circle-progress {
+            fill: none;
+            stroke: #e91e63;
+            stroke-width: 15;
+            stroke-linecap: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 0;
+            transition: 1s linear;
+        }
+
+        .timer-text {
+            position: absolute;
+            font-size: 110px;
+            font-weight: 900;
+            text-shadow: 0 0 20px #e91e63;
+        }
+
+        /* صندوق السؤال والخيارات */
+        .question-box {
+            width: 80%;
+            margin: 0 auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border-radius: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
         }
 
         .q-text {
-            font-size: 70px;
-            margin-bottom: 50px;
-            line-height: 1.3;
+            font-size: 38px;
+            margin-bottom: 35px;
+            font-weight: 700;
         }
 
-        .grid {
+        .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            gap: 20px;
         }
 
-        .opt {
-            font-size: 45px;
-            padding: 30px;
-            border: 4px solid #f48fb1;
-            border-radius: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            transition: 0.6s ease;
+        .opt-item {
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(156, 39, 176, 0.2);
+            border-radius: 20px;
+            font-size: 28px;
+            transition: 0.4s;
         }
 
-        .correct {
-            background: #4caf50 !important;
-            border-color: #a5d6a7 !important;
-            transform: scale(1.1);
-            box-shadow: 0 0 50px #4caf50;
-        }
-
-        #winner {
-            font-size: 110px;
-            color: #ffeb3b;
-            display: block;
-            margin: 40px;
-            animation: bounce 1s infinite;
-        }
-
-        @keyframes bounce {
+        @keyframes pulse {
 
             0%,
             100% {
@@ -85,80 +173,49 @@
 </head>
 
 <body>
-    <audio id="tick" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
-    <audio id="bell" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
-    <audio id="cheer" src="https://www.soundjay.com/human/sounds/applause-01.mp3"></audio>
+    <img src="logo.png" class="logo-left">
+    <img src="ribbon_purple.png" class="ribbon-decor">
 
-    <div class="card" id="main-card">
-        <div id="timer">60</div>
-        <div class="q-text" id="q-text">بانتظار البدء... 🎗️</div>
-        <div class="grid" id="options"></div>
-        <div id="status" style="font-size: 30px; margin-top: 30px; color: #fce4ec;"></div>
+    <div id="welcome-overlay">
+        <div class="welcome-card">
+            <div class="welcome-msg">
+                Bienvenue au Challenge Médical de la<br>
+                Journée Mondiale contre le Cancer
+            </div>
+            <div class="welcome-sub">
+                🎗️ Ensemble pour la sensibilisation 🎗️
+            </div>
+        </div>
+    </div>
+
+    <div id="quiz-interface">
+        <div class="timer-container">
+            <svg class="timer-svg">
+                <circle class="circle-progress" id="progress" cx="175" cy="175" r="160"></circle>
+            </svg>
+            <div class="timer-text" id="seconds">60</div>
+        </div>
+        <div class="question-box">
+            <div class="q-text" id="q-text">En attente du départ...</div>
+            <div class="options-grid" id="options"></div>
+        </div>
     </div>
 
     <script>
-        const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
-        let lastStep = -1, timer;
-        const questions = [
-            { q: "ما هو السن الموصى به للماموغرافيا؟", opts: ["20 سنة", "30 سنة", "40 سنة", "50 سنة"], c: 2 },
-            { q: "أفضل غذاء للوقاية؟", opts: ["الحلويات", "الخضروات الورقية", "المقليات", "المعلبات"], c: 1 },
-            { q: "عدد مرات الفحص الذاتي شهرياً؟", opts: ["مرة واحدة", "مرتين", "أربع مرات", "لا يهم"], c: 0 },
-            { q: "اللون العالمي للتوعية؟", opts: ["أزرق", "أحمر", "وردي", "أصفر"], c: 2 },
-            { q: "هل الرياضة تقلل الخطر؟", opts: ["لا", "نعم بالتأكيد", "قليلاً", "فقط للمحترفين"], c: 1 },
-            { q: "شهر التوعية العالمي؟", opts: ["جانفي", "جوان", "أكتوبر", "ديسمبر"], c: 2 },
-            { q: "أول خطوة عند الشك؟", opts: ["الانتظار", "الطبيب فوراً", "الأعشاب", "التجاهل"], c: 1 },
-            { q: "وسيلة الكشف الأدق؟", opts: ["اللمس فقط", "الماموغرافيا", "النظر", "الوزن"], c: 1 },
-            { q: "نسبة الشفاء بالكشف المبكر؟", opts: ["90%", "10%", "50%", "لا توجد"], c: 0 },
-            { q: "شعار الأمل والتحدي هو؟", opts: ["أكتوبر الوردي", "القوة", "الحياة", "نحن معكِ"], c: 0 }
-        ];
+        // دالة الانتقال من الترحيب للمسابقة
+        function adminStart() {
+            const welcome = document.getElementById('welcome-overlay');
+            const quiz = document.getElementById('quiz-interface');
 
-        setInterval(async () => {
-            const r = await fetch(`${dbURL}state.json`);
-            const s = await r.json();
-            if (s && s.step > lastStep) {
-                lastStep = s.step;
-                if (lastStep < 10) showQ(lastStep);
-                else showWinner();
-            } else if (s && s.reset) location.reload();
-        }, 2000);
-
-        function showQ(idx) {
-            const q = questions[idx];
-            document.getElementById('q-text').innerText = q.q;
-            document.getElementById('status').innerText = "اللاعبات يجاوبن الآن...";
-            const div = document.getElementById('options');
-            div.innerHTML = "";
-            q.opts.forEach((o, i) => div.innerHTML += `<div class="opt" id="opt-${i}">${o}</div>`);
-            startTimer(q.c);
-        }
-
-        function startTimer(correctIdx) {
-            let left = 60;
-            clearInterval(timer);
-            timer = setInterval(() => {
-                left--;
-                document.getElementById('timer').innerText = left;
-                if (left <= 10 && left > 0) document.getElementById('tick').play();
-                if (left <= 0) {
-                    clearInterval(timer);
-                    document.getElementById('bell').play();
-                    document.getElementById('status').innerText = "انتهى الوقت! ترقبوا الحل...";
-                    setTimeout(() => {
-                        document.getElementById(`opt-${correctIdx}`).classList.add('correct');
-                        document.getElementById('status').innerText = "هذه هي الإجابة الصحيحة ✅";
-                    }, 20000); // 20 ثانية تشويق
-                }
+            welcome.style.opacity = '0';
+            setTimeout(() => {
+                welcome.style.display = 'none';
+                quiz.style.display = 'block';
+                setTimeout(() => quiz.style.opacity = '1', 50);
             }, 1000);
         }
 
-        async function showWinner() {
-            const res = await fetch(`${dbURL}players.json`);
-            const data = await res.json();
-            const winner = Object.entries(data).sort((a, b) => b[1].score - a[1].score || a[1].lastUpdate - b[1].lastUpdate)[0];
-            document.getElementById('main-card').innerHTML = `<h1>🏆 بطلة التوعية هي:</h1><span id="winner">${winner[0]}</span><p style='font-size:40px'>ألف مبروك! 🎉🎗️</p>`;
-            document.getElementById('cheer').play();
-            confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 } });
-        }
+        // ملاحظة: يجب إضافة كود Firebase هنا للربط مع الآدمن
     </script>
 </body>
 
