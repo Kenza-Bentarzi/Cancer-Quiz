@@ -3,107 +3,116 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>لوحة الإدارة - كنزة 🎗️</title>
+    <title>لوحة تحكم كنزة 🎗️</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Cairo', sans-serif;
             background: #2c3e50;
             color: white;
-            padding: 20px;
             text-align: center;
+            padding: 30px;
         }
 
-        .controls {
+        .box {
             background: #34495e;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
         .btn {
-            padding: 15px 30px;
-            font-size: 18px;
-            margin: 10px;
-            cursor: pointer;
+            padding: 18px 35px;
+            font-size: 22px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
+            cursor: pointer;
             color: white;
+            margin: 10px;
             font-weight: bold;
+            transition: 0.3s;
         }
 
         .next {
             background: #27ae60;
+            box-shadow: 0 5px 0 #219150;
+        }
+
+        .next:active {
+            transform: translateY(5px);
+            box-shadow: none;
         }
 
         .reset {
             background: #e74c3c;
+            font-size: 16px;
+            margin-top: 50px;
         }
 
-        #leaderboard {
+        .player-row {
             background: white;
             color: #333;
-            padding: 20px;
+            padding: 15px;
+            margin: 10px 0;
             border-radius: 10px;
-            max-width: 500px;
-            margin: auto;
-        }
-
-        .user-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
+            font-size: 20px;
+        }
+
+        .score-badge {
+            background: #e91e63;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
         }
     </style>
 </head>
 
 <body>
-    <h1>لوحة التحكم في المسابقة 🎗️</h1>
-    <div class="controls">
-        <h2 id="status">جاهزة للبدء</h2>
-        <button class="btn next" onclick="triggerNext()">السؤال التالي ➡️</button>
-        <button class="btn reset" onclick="resetAll()">تصفير المسابقة بالكامل 🔄</button>
+    <h1>التحكم في المسابقة 🎗️</h1>
+    <div class="box">
+        <h2 id="step-txt">بانتظار البدء</h2>
+        <button class="btn next" onclick="next()">إرسال السؤال التالي ➡️</button>
     </div>
-    <div id="leaderboard">
-        <h3>قائمة المتسابقات الحالية:</h3>
-        <div id="users-list">انتظار دخول المتسابقات...</div>
+
+    <div class="box" id="leaderboard">
+        <h3>نتائج المتسابقات (مباشر):</h3>
+        <div id="players-list"></div>
     </div>
+
+    <button class="btn reset" onclick="reset()">🔄 بدء مسابقة جديدة تماماً (تصفير)</button>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
         let currentStep = -1;
 
-        async function triggerNext() {
-            currentStep++;
-            await fetch(`${dbURL}gameState.json`, {
-                method: 'PUT',
-                body: JSON.stringify({ started: true, currentStep: currentStep, reset: false })
-            });
-            document.getElementById('status').innerText = `جاري عرض السؤال رقم: ${currentStep + 1}`;
-        }
-
-        async function resetAll() {
-            if (confirm("هل أنتِ متأكدة؟")) {
+        async function reset() {
+            if (confirm("هل أنتِ متأكدة؟ سيتم حذف جميع المتسابقات والبدء من الصفر.")) {
                 await fetch(`${dbURL}.json`, { method: 'DELETE' });
-                await fetch(`${dbURL}gameState.json`, {
-                    method: 'PUT',
-                    body: JSON.stringify({ started: false, currentStep: -1, reset: true })
-                });
+                await fetch(`${dbURL}state.json`, { method: 'PUT', body: JSON.stringify({ step: -1, reset: true }) });
                 location.reload();
             }
         }
 
+        async function next() {
+            currentStep++;
+            await fetch(`${dbURL}state.json`, { method: 'PATCH', body: JSON.stringify({ step: currentStep, reset: false }) });
+            document.getElementById('step-txt').innerText = "السؤال الحالي: " + (currentStep + 1);
+        }
+
         setInterval(async () => {
-            const res = await fetch(`${dbURL}results.json`);
+            const res = await fetch(`${dbURL}players.json`);
             const data = await res.json();
-            const list = document.getElementById('users-list');
-            if (!data) { list.innerHTML = "لا يوجد متسابقات حالياً"; return; }
+            const list = document.getElementById('players-list');
             list.innerHTML = "";
-            const sorted = Object.entries(data).sort((a, b) => b[1].score - a[1].score);
-            sorted.forEach(([name, info]) => {
-                list.innerHTML += `<div class="user-row"><span>${name}</span><span><strong>${info.score} نقطة</strong></span></div>`;
-            });
-        }, 3000);
+            if (data) {
+                Object.entries(data).forEach(([name, info]) => {
+                    list.innerHTML += `<div class="player-row"><span>👩‍💼 ${name}</span><span class="score-badge">${info.score} نقطة</span></div>`;
+                });
+            } else { list.innerHTML = "لا يوجد متسابقات حالياً"; }
+        }, 2000);
     </script>
 </body>
 

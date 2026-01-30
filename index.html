@@ -4,168 +4,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحدي الأمل - مسابقة أكتوبر الوردي</title>
+    <title>تحدي أكتوبر الوردي 🎗️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --pink: #e91e63;
+            --bg: #fff5f8;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #fff0f5;
-            text-align: center;
-            color: #d81b60;
+            font-family: 'Cairo', sans-serif;
+            background: var(--bg);
             margin: 0;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
 
-        .card {
+        .container {
             background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            margin: auto;
-        }
-
-        .btn {
-            background-color: #e91e63;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 18px;
-            margin: 10px;
+            width: 90%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.15);
+            text-align: center;
         }
 
         .option {
             display: block;
-            background: #fce4ec;
-            margin: 10px 0;
+            width: 100%;
             padding: 15px;
-            border-radius: 10px;
+            margin: 12px 0;
+            border: 2px solid #fce4ec;
+            border-radius: 12px;
+            background: white;
             cursor: pointer;
-            border: 2px solid transparent;
+            transition: 0.3s;
             font-weight: bold;
+            font-size: 16px;
+            text-align: center;
         }
 
-        .option:hover {
-            border-color: #e91e63;
-            background-color: #f8bbd0;
+        .option.selected {
+            background: var(--pink) !important;
+            color: white;
+            border-color: var(--pink);
         }
 
-        #quiz-screen,
-        #result-screen,
-        #waiting-screen {
-            display: none;
+        .option:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress {
+            width: 100%;
+            height: 100%;
+            background: var(--pink);
+            transition: 1s linear;
+        }
+
+        h1 {
+            color: var(--pink);
+            font-size: 24px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #fce4ec;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .btn-main {
+            background: var(--pink);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        <h1>🎗️ تحدي الأمل</h1>
-
+    <div class="container" id="app">
         <div id="login-screen">
-            <p>أهلاً بكِ في مسابقة التوعية!</p>
-            <input type="text" id="username" placeholder="اكتبي اسمكِ هنا..."
-                style="padding: 12px; width: 80%; border-radius: 10px; border: 1px solid #ddd; font-size: 16px;"><br>
-            <button class="btn" onclick="registerUser()">دخول المسابقة</button>
+            <h1>🎗️ سجلّي اسمكِ</h1>
+            <input type="text" id="username" placeholder="اكتبي اسمكِ هنا...">
+            <button class="btn-main" onclick="register()">دخول المسابقة</button>
         </div>
 
-        <div id="waiting-screen">
-            <h3 id="waiting-msg">تم تسجيلكِ بنجاح ✅</h3>
-            <p>يرجى الانتظار حتى تعطي المنظمة إشارة البدء...</p>
-            <div style="font-size: 40px;">⏳</div>
-        </div>
-
-        <div id="quiz-screen">
-            <h2 id="question-text">السؤال يظهر هنا</h2>
+        <div id="quiz-screen" style="display:none;">
+            <div id="timer-bar">
+                <div id="progress"></div>
+            </div>
+            <h3 id="q-text" style="color: #333;"></h3>
             <div id="options-container"></div>
         </div>
 
-        <div id="result-screen">
-            <h2>انتهت المسابقة! 🎉</h2>
-            <p id="final-score" style="font-size: 24px; font-weight: bold;"></p>
-            <p>شكراً لمشاركتكِ في نشر الوعي 🎗️</p>
+        <div id="waiting-screen" style="display:none;">
+            <h2 id="wait-msg" style="color: var(--pink);">انتظري إشارة البدء...</h2>
+            <p>سيبدأ السؤال التالي قريباً</p>
         </div>
     </div>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
-        let currentUser = "";
-        let currentScore = 0;
-        let lastStepSeen = -1;
-
+        let user = "", score = 0, lastStep = -1, timer;
         const questions = [
-            { q: "ما هو اللون العالمي لشهر أكتوبر الوردي؟", options: ["الوردي", "الأزرق", "الأحمر"], correct: 0 },
-            { q: "هل الكشف المبكر يزيد فرص الشفاء؟", options: ["نعم", "لا", "ربما"], correct: 0 },
-            { q: "ما هي الرياضة الأسهل للوقاية؟", options: ["المشي", "السباحة", "الركض"], correct: 0 },
-            { q: "الغذاء الصحي يحتوي على الكثير من..؟", options: ["السكريات", "الخضروات", "الدهون"], correct: 1 },
-            { q: "كم مرة يفضل الفحص الذاتي؟", options: ["كل سنة", "كل شهر", "كل يوم"], correct: 1 },
-            { q: "الفحص السنوي بالماموغرافيا يبدأ غالباً من سن..؟", options: ["20 سنة", "40 سنة", "60 سنة"], correct: 1 },
-            { q: "هل الحالة النفسية مهمة للمريض؟", options: ["نعم جداً", "ليس لها دور", "قليلاً"], correct: 0 },
-            { q: "أكتوبر هو شهر التوعية بمرض سرطان..؟", options: ["الرئة", "الثدي", "الجلد"], correct: 1 },
-            { q: "أين نتوجه عند اكتشاف أي كتلة؟", options: ["للطبيب فوراً", "للصيدلية", "للبيت"], correct: 0 },
-            { q: "شعارنا اليوم هو 'الأمل و..'", options: ["الحزن", "التحدي", "الخوف"], correct: 1 }
+            { q: "ما هو السن الموصى به للماموغرافيا؟", opts: ["20 سنة", "30 سنة", "40 سنة", "50 سنة"], c: 2 },
+            { q: "أفضل غذاء للوقاية؟", opts: ["الحلويات", "الخضروات الورقية", "المقليات", "المعلبات"], c: 1 },
+            { q: "عدد مرات الفحص الذاتي شهرياً؟", opts: ["مرة واحدة", "مرتين", "أربع مرات", "لا يهم"], c: 0 },
+            { q: "اللون العالمي للتوعية؟", opts: ["أزرق", "أحمر", "وردي", "أصفر"], c: 2 },
+            { q: "هل الرياضة تقلل الخطر؟", opts: ["لا", "نعم بالتأكيد", "قليلاً", "فقط للمحترفين"], c: 1 },
+            { q: "شهر التوعية العالمي؟", opts: ["جانفي", "جوان", "أكتوبر", "ديسمبر"], c: 2 },
+            { q: "أول خطوة عند الشك؟", opts: ["الانتظار", "الطبيب فوراً", "الأعشاب", "التجاهل"], c: 1 },
+            { q: "وسيلة الكشف الأدق؟", opts: ["اللمس فقط", "الماموغرافيا", "النظر", "الوزن"], c: 1 },
+            { q: "نسبة الشفاء بالكشف المبكر؟", opts: ["90%", "10%", "50%", "لا توجد"], c: 0 },
+            { q: "شعار الأمل والتحدي هو؟", opts: ["أكتوبر الوردي", "القوة", "الحياة", "نحن معكِ"], c: 0 }
         ];
 
-        async function registerUser() {
-            currentUser = document.getElementById('username').value.trim();
-            if (!currentUser) return alert("من فضلكِ ادخلي اسمكِ");
-            await fetch(`${dbURL}results/${currentUser}.json`, {
-                method: 'PUT',
-                body: JSON.stringify({ score: 0, lastUpdate: Date.now() })
-            });
+        async function register() {
+            user = document.getElementById('username').value.trim();
+            if (!user) return alert("من فضلكِ اكتبي اسمكِ");
+            await fetch(`${dbURL}players/${user}.json`, { method: 'PUT', body: JSON.stringify({ score: 0, lastUpdate: Date.now() }) });
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('waiting-screen').style.display = 'block';
-            startListening();
+            listen();
         }
 
-        function startListening() {
+        function listen() {
             setInterval(async () => {
-                const res = await fetch(`${dbURL}gameState.json`);
-                const state = await res.json();
-                if (state && state.started) {
-                    if (state.currentStep > lastStepSeen) {
-                        lastStepSeen = state.currentStep;
-                        if (lastStepSeen < questions.length) {
-                            showQuestion(lastStepSeen);
-                        } else { showResults(); }
-                    }
-                } else if (state && state.reset) { location.reload(); }
+                const r = await fetch(`${dbURL}state.json`);
+                const s = await r.json();
+                if (s && s.step > lastStep) {
+                    lastStep = s.step;
+                    if (lastStep < 10) showQ(lastStep);
+                    else showEnd();
+                } else if (s && s.reset) location.reload();
             }, 2000);
         }
 
-        function showQuestion(index) {
+        function showQ(idx) {
             document.getElementById('waiting-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
-            const q = questions[index];
-            document.getElementById('question-text').innerText = q.q;
+            const q = questions[idx];
+            document.getElementById('q-text').innerText = q.q;
             const container = document.getElementById('options-container');
             container.innerHTML = "";
-            q.options.forEach((opt, i) => {
-                const div = document.createElement('div');
-                div.className = "option";
-                div.innerText = opt;
-                div.onclick = () => selectAnswer(index, i);
-                container.appendChild(div);
+            q.opts.forEach((o, i) => {
+                container.innerHTML += `<button class="option" onclick="answer(${idx}, ${i}, this)">${o}</button>`;
             });
+            startTimer();
         }
 
-        async function selectAnswer(qIndex, oIndex) {
-            if (oIndex === questions[qIndex].correct) { currentScore += 10; }
-            await fetch(`${dbURL}results/${currentUser}.json`, {
-                method: 'PATCH',
-                body: JSON.stringify({ score: currentScore, lastUpdate: Date.now() })
-            });
-            document.getElementById('quiz-screen').style.display = 'none';
-            document.getElementById('waiting-screen').style.display = 'block';
-            document.getElementById('waiting-msg').innerText = "تم إرسال إجابتكِ ✅";
+        function startTimer() {
+            let left = 60;
+            const bar = document.getElementById('progress');
+            bar.style.width = "100%";
+            clearInterval(timer);
+            timer = setInterval(() => {
+                left--;
+                bar.style.width = (left / 60) * 100 + "%";
+                if (left <= 0) {
+                    clearInterval(timer);
+                    disableAll();
+                    setTimeout(() => {
+                        document.getElementById('quiz-screen').style.display = 'none';
+                        document.getElementById('waiting-screen').style.display = 'block';
+                    }, 2000);
+                }
+            }, 1000);
         }
 
-        function showResults() {
-            document.getElementById('waiting-screen').style.display = 'none';
-            document.getElementById('quiz-screen').style.display = 'none';
-            document.getElementById('result-screen').style.display = 'block';
-            document.getElementById('final-score').innerText = `نقاطكِ النهائية: ${currentScore}`;
+        function disableAll() {
+            const btns = document.querySelectorAll('.option');
+            btns.forEach(b => b.disabled = true);
+        }
+
+        async function answer(qIdx, oIdx, btn) {
+            clearInterval(timer);
+            disableAll();
+            btn.classList.add('selected');
+            if (oIdx === questions[qIdx].c) score += 10;
+            await fetch(`${dbURL}players/${user}.json`, { method: 'PATCH', body: JSON.stringify({ score: score, lastUpdate: Date.now() }) });
+            setTimeout(() => {
+                document.getElementById('quiz-screen').style.display = 'none';
+                document.getElementById('waiting-screen').style.display = 'block';
+            }, 1000);
+        }
+
+        function showEnd() {
+            document.getElementById('app').innerHTML = `<h1>🎉 انتهى التحدي</h1><h3>نقاطكِ: ${score}</h3><p>شكراً لوعيكِ 🎗️</p>`;
         }
     </script>
 </body>
