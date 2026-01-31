@@ -4,22 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <title>لوحة تحكم كنزة 🎗️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Cairo', sans-serif;
-            background: #2c3e50;
+            background: #1a1a1a;
             color: white;
             text-align: center;
             padding: 30px;
         }
 
         .box {
-            background: #34495e;
+            background: #2c2c2c;
             padding: 25px;
             border-radius: 20px;
             margin: 20px auto;
             max-width: 600px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid #9c27b0;
         }
 
         .btn {
@@ -32,33 +33,35 @@
             margin: 10px;
             font-weight: bold;
             transition: 0.3s;
+            width: 80%;
         }
 
-        .next {
-            background: #27ae60;
-            box-shadow: 0 5px 0 #219150;
+        .start-btn {
+            background: #4caf50;
+            box-shadow: 0 5px 0 #2e7d32;
         }
 
-        .next:active {
-            transform: translateY(5px);
-            box-shadow: none;
+        .next-btn {
+            background: #9c27b0;
+            box-shadow: 0 5px 0 #6a1b9a;
         }
 
         .reset {
             background: #e74c3c;
             font-size: 16px;
             margin-top: 50px;
+            opacity: 0.7;
         }
 
         .player-row {
-            background: white;
-            color: #333;
+            background: #333;
+            color: white;
             padding: 15px;
             margin: 10px 0;
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
-            font-size: 20px;
+            border: 1px solid #444;
         }
 
         .score-badge {
@@ -72,46 +75,81 @@
 
 <body>
     <h1>التحكم في المسابقة 🎗️</h1>
+
     <div class="box">
-        <h2 id="step-txt">بانتظار البدء</h2>
-        <button class="btn next" onclick="next()">إرسال السؤال التالي ➡️</button>
+        <h2 id="status-txt">الشاشة الآن: ترحيب</h2>
+        <button class="btn start-btn" id="start-btn" onclick="triggerStart()">🚀 إطلاق المسابقة (إخفاء الترحيب)</button>
+
+        <hr style="border: 0.5px solid #444; margin: 20px 0;">
+
+        <button class="btn next-btn" onclick="sendNextQuestion()">السؤال التالي ➡️</button>
     </div>
 
-    <div class="box" id="leaderboard">
+    <div class="box">
         <h3>نتائج المتسابقات (مباشر):</h3>
-        <div id="players-list"></div>
+        <div id="players-list">لا يوجد متسابقات حالياً</div>
     </div>
 
-    <button class="btn reset" onclick="reset()">🔄 بدء مسابقة جديدة تماماً (تصفير)</button>
+    <button class="btn reset" onclick="resetGame()">🔄 تصفير المسابقة بالكامل</button>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
-        let currentStep = -1;
+        let currentQIndex = 0;
 
-        async function reset() {
-            if (confirm("هل أنتِ متأكدة؟ سيتم حذف جميع المتسابقات والبدء من الصفر.")) {
+        // الأسئلة الـ 10 المقترحة
+        const questions = [
+            { id: 1, text: "Quel est l'âge recommandé pour la première mammographie ?", options: ["20 ans", "30 ans", "40 ans", "50 ans"], correctIndex: 2 },
+            { id: 2, text: "L'activité physique réduit le risque de cancer ?", options: ["Vrai", "Faux", "Peu probable", "Aucun lien"], correctIndex: 0 },
+            // يمكنك إضافة باقي الأسئلة هنا بنفس التنسيق
+        ];
+
+        // 1. إرسال أمر بدء المسابقة (يخفي شاشة الترحيب عند الجمهور)
+        async function triggerStart() {
+            await fetch(`${dbURL}gameStatus.json`, {
+                method: 'PATCH',
+                body: JSON.stringify({ state: 'START_QUIZ' })
+            });
+            document.getElementById('status-txt').innerText = "الشاشة الآن: السؤال الأول";
+            document.getElementById('start-btn').style.display = 'none';
+            sendNextQuestion(); // إرسال أول سؤال تلقائياً
+        }
+
+        // 2. إرسال السؤال التالي
+        async function sendNextQuestion() {
+            if (currentQIndex < questions.length) {
+                const questionData = questions[currentQIndex];
+                await fetch(`${dbURL}gameStatus.json`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ currentQuestion: questionData })
+                });
+                document.getElementById('status-txt').innerText = "تم إرسال السؤال رقم: " + (currentQIndex + 1);
+                currentQIndex++;
+            } else {
+                alert("انتهت جميع الأسئلة!");
+            }
+        }
+
+        // 3. تصفير المسابقة
+        async function resetGame() {
+            if (confirm("سيتم حذف كل البيانات، هل أنتِ متأكدة؟")) {
                 await fetch(`${dbURL}.json`, { method: 'DELETE' });
-                await fetch(`${dbURL}state.json`, { method: 'PUT', body: JSON.stringify({ step: -1, reset: true }) });
                 location.reload();
             }
         }
 
-        async function next() {
-            currentStep++;
-            await fetch(`${dbURL}state.json`, { method: 'PATCH', body: JSON.stringify({ step: currentStep, reset: false }) });
-            document.getElementById('step-txt').innerText = "السؤال الحالي: " + (currentStep + 1);
-        }
-
+        // 4. تحديث قائمة المتصدرين (Leaderboard)
         setInterval(async () => {
-            const res = await fetch(`${dbURL}players.json`);
-            const data = await res.json();
-            const list = document.getElementById('players-list');
-            list.innerHTML = "";
-            if (data) {
-                Object.entries(data).forEach(([name, info]) => {
-                    list.innerHTML += `<div class="player-row"><span>👩‍💼 ${name}</span><span class="score-badge">${info.score} نقطة</span></div>`;
-                });
-            } else { list.innerHTML = "لا يوجد متسابقات حالياً"; }
+            try {
+                const res = await fetch(`${dbURL}players.json`);
+                const data = await res.json();
+                const list = document.getElementById('players-list');
+                list.innerHTML = "";
+                if (data) {
+                    Object.entries(data).forEach(([name, info]) => {
+                        list.innerHTML += `<div class="player-row"><span>👩‍💼 ${name}</span><span class="score-badge">${info.score} نقطة</span></div>`;
+                    });
+                }
+            } catch (e) { }
         }, 2000);
     </script>
 </body>

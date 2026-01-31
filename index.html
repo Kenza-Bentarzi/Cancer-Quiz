@@ -4,10 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Inscription 🎗️</title>
+    <title>Quiz Participation 🎗️</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* إعدادات الخلفية الطبية الثابتة */
         body {
             margin: 0;
             font-family: 'Poppins', sans-serif;
@@ -20,118 +19,84 @@
             overflow: hidden;
         }
 
-        /* طبقة حماية بصرية بنفسجية */
         .overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(42, 8, 69, 0.4);
+            inset: 0;
+            background: rgba(42, 8, 69, 0.6);
             z-index: 0;
         }
 
-        /* البطاقة الزجاجية (Glassmorphism) */
         .glass-card {
             position: relative;
             z-index: 1;
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 30px;
-            padding: 40px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 30px;
             width: 85%;
-            max-width: 380px;
+            max-width: 350px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
             color: white;
         }
 
-        h2 {
-            font-size: 24px;
-            margin-bottom: 30px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        /* خانة إدخال الاسم */
         input {
             width: 100%;
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             color: white;
             text-align: center;
-            font-size: 16px;
             margin-bottom: 20px;
-            outline: none;
             box-sizing: border-box;
         }
 
-        /* زر الدخول المتوهج */
         .btn-main {
             background: linear-gradient(45deg, #e91e63, #9c27b0);
             color: white;
             border: none;
-            padding: 16px;
+            padding: 15px;
             border-radius: 50px;
             width: 100%;
-            font-size: 18px;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.4s;
-            box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
-            text-transform: uppercase;
-        }
-
-        .btn-main:hover {
-            transform: scale(1.03);
-            box-shadow: 0 12px 25px rgba(233, 30, 99, 0.6);
-        }
-
-        /* تنسيق الأسئلة والخيارات */
-        .q-title {
-            font-size: 18px;
-            margin-bottom: 20px;
-            line-height: 1.5;
         }
 
         .opt-btn {
             display: block;
             width: 100%;
-            padding: 14px;
-            margin: 12px 0;
-            background: rgba(255, 255, 255, 0.08);
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
+            border-radius: 12px;
             color: white;
             cursor: pointer;
             transition: 0.3s;
-            font-size: 15px;
         }
 
-        .opt-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .opt-btn.selected {
+        .selected {
             background: #e91e63 !important;
             border-color: white;
             font-weight: bold;
         }
 
-        /* شريط الوقت السفلي */
-        .timer-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
         }
 
-        .progress {
+        .timer-mini {
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            margin-bottom: 15px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #progress {
             width: 100%;
             height: 100%;
             background: #ffeb3b;
@@ -144,29 +109,30 @@
     <div class="overlay"></div>
 
     <div class="glass-card" id="login-box">
-        <h2>Inscription</h2>
-        <input type="text" id="username" placeholder="Nom de l'équipe..." autocomplete="off">
+        <h2 style="margin-top:0">🎗️ Inscription</h2>
+        <input type="text" id="username" placeholder="Votre Nom..." autocomplete="off">
         <button class="btn-main" onclick="joinGame()">REJOINDRE</button>
     </div>
 
     <div class="glass-card" id="quiz-box" style="display:none;">
-        <div class="timer-bar">
-            <div id="progress" class="progress"></div>
+        <div class="timer-mini">
+            <div id="progress"></div>
         </div>
-        <div class="q-title" id="question-text">Attente du début...</div>
+        <div id="question-text" style="font-weight:600; margin-bottom:15px;">Attente de l'administrateur...</div>
         <div id="options-container"></div>
     </div>
 
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
         let currentUsername = "";
+        let currentQId = null;
+        let score = 0;
 
         async function joinGame() {
             const name = document.getElementById('username').value.trim();
             if (!name) return alert("Entrez votre nom!");
             currentUsername = name;
 
-            // تسجيل اللاعب في Firebase
             await fetch(`${dbURL}players/${name}.json`, {
                 method: 'PUT',
                 body: JSON.stringify({ score: 0, lastSeen: Date.now() })
@@ -174,23 +140,58 @@
 
             document.getElementById('login-box').style.display = 'none';
             document.getElementById('quiz-box').style.display = 'block';
-            startSync();
-            startHeartbeat();
+            syncWithAdmin();
         }
 
-        // إرسال إشارة "أنا متصل" كل 5 ثوانٍ للآدمن
-        function startHeartbeat() {
-            setInterval(() => {
-                fetch(`${dbURL}players/${currentUsername}/lastSeen.json`, {
+        async function syncWithAdmin() {
+            setInterval(async () => {
+                try {
+                    const res = await fetch(`${dbURL}gameStatus.json`);
+                    const data = await res.json();
+
+                    if (data && data.currentQuestion) {
+                        // إذا وصل سؤال جديد لم نجب عليه بعد
+                        if (currentQId !== data.currentQuestion.id) {
+                            currentQId = data.currentQuestion.id;
+                            displayQuestion(data.currentQuestion);
+                        }
+                    }
+                } catch (e) { }
+            }, 1500);
+        }
+
+        function displayQuestion(q) {
+            document.getElementById('question-text').innerText = q.text;
+            const container = document.getElementById('options-container');
+            container.innerHTML = "";
+            container.classList.remove('disabled');
+
+            q.options.forEach((opt, i) => {
+                container.innerHTML += `<button class="opt-btn" onclick="submitAnswer(${i}, ${q.correctIndex})">${opt}</button>`;
+            });
+
+            // تحريك شريط الوقت (60 ثانية)
+            const prog = document.getElementById('progress');
+            prog.style.width = "100%";
+            setTimeout(() => prog.style.width = "0%", 100);
+        }
+
+        async function submitAnswer(index, correctIndex) {
+            // تعطيل باقي الخيارات
+            const container = document.getElementById('options-container');
+            container.classList.add('disabled');
+
+            const btns = container.getElementsByTagName('button');
+            btns[index].classList.add('selected');
+
+            // إذا كانت الإجابة صحيحة، زد النقاط في Firebase
+            if (index === correctIndex) {
+                score += 10;
+                await fetch(`${dbURL}players/${currentUsername}/score.json`, {
                     method: 'PUT',
-                    body: JSON.stringify(Date.now())
+                    body: JSON.stringify(score)
                 });
-            }, 5000);
-        }
-
-        function startSync() {
-            // كود المزامنة مع الأسئلة (سأكمله لكِ في الجزء التقني)
-            console.log("Sync started for: " + currentUsername);
+            }
         }
     </script>
 </body>
