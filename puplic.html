@@ -3,224 +3,205 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grand Écran - Challenge Médical 🎗️</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-
     <style>
-        body {
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-            background: url('bg.jpg') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
-            overflow: auto;
-            color: white;
+        :root {
+            --primary-gradient: linear-gradient(45deg, #9c27b0, #e91e63);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --text-white: #ffffff;
         }
 
-        /* --- كود اللوغو الدائري المطور --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* لمنع التمرير وضمان ثبات الصفحة */
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-white);
+        }
+
+        /* الخلفية الثابتة والوحيدة */
+        .main-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('bg.jpg') no-repeat center center;
+            background-size: cover;
+            z-index: -1;
+        }
+
+        /* اللوجو الثابت */
         .logo-fixed-container {
             position: absolute;
-            top: 15px;
-            left: 25px;
-            z-index: 500;
-            display: inline-block;
+            top: 25px;
+            left: 30px;
+            z-index: 1000;
             padding: 5px;
-            background: linear-gradient(45deg, #9c27b0, #e91e63);
+            background: var(--primary-gradient);
             border-radius: 50%;
             box-shadow: 0 0 20px rgba(156, 39, 176, 0.6);
             animation: glowPulse 3s infinite ease-in-out;
         }
 
         .logo-fixed-container img {
-            width: 110px;
-            height: 110px;
-            object-fit: cover;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.9);
+            border: 3px solid white;
             display: block;
         }
 
-        @keyframes glowPulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 15px rgba(156, 39, 176, 0.5);
-            }
-
-            50% {
-                box-shadow: 0 0 35px rgba(233, 30, 99, 0.8);
-            }
-        }
-
-        /* ------------------------------- */
-
-        #decorations-layer {
-            position: absolute;
-            inset: 0;
-            z-index: 100;
-            transition: 1.5s;
-        }
-
-        .ribbon-decor {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            width: 90px;
-            filter: drop-shadow(0 0 15px #9c27b0);
-            animation: pulse 2s infinite;
-        }
-
-        #welcome-overlay {
+        /* الحاويات الرئيسية */
+        .screen-layer {
             position: absolute;
             inset: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 400;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(20px);
-            transition: 1.5s;
-            min-height: 100vh;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* واجهة الترحيب */
+        #welcome-overlay {
+            z-index: 500;
+            background: rgba(0, 0, 0, 0.4); /* تعتيم خفيف جداً */
+            backdrop-filter: blur(8px);
         }
 
         .welcome-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 40px 50px;
+            background: var(--glass-bg);
+            padding: 50px;
             border-radius: 40px;
-            border: 1px solid rgba(156, 39, 176, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             text-align: center;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-            max-width: 65%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
         }
 
+        /* واجهة الكويز */
         #quiz-interface {
-            display: none;
             opacity: 0;
-            transition: 1.5s;
-            text-align: center;
-            width: 100%;
-            padding: 160px 0 40px 0;
-            min-height: 100vh;
+            pointer-events: none;
+            z-index: 400;
+            transform: translateY(30px);
         }
 
+        #quiz-interface.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* العداد الأبيض النقي */
         .timer-container {
-            position: relative;
-            width: 220px;
-            height: 220px;
-            margin: 0 auto 25px;
-        }
-
-        .timer-svg {
-            transform: rotate(-90deg);
-            width: 220px;
-            height: 220px;
-        }
-
-        .circle-progress {
-            fill: none;
-            stroke: #e91e63;
-            stroke-width: 12;
-            stroke-linecap: round;
-            stroke-dasharray: 628;
-            stroke-dashoffset: 0;
-            transition: 1s linear;
+            text-align: center;
+            margin-bottom: 40px;
         }
 
         .timer-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 70px;
+            font-size: 100px;
             font-weight: 900;
-            text-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
+            color: #ffffff;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+            line-height: 1;
         }
 
+        .timer-label {
+            font-size: 20px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* السؤال والخيارات */
         .question-glass {
-            width: 65%;
-            margin: 0 auto;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(30px);
+            width: 70%;
+            max-width: 1000px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
             border-radius: 35px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
 
         .q-text {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
-            margin-bottom: 25px;
-            line-height: 1.3;
+            margin-bottom: 40px;
+            text-align: center;
         }
 
         .options-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 25px;
         }
 
         .opt {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            border: 2px solid rgba(156, 39, 176, 0.3);
-            border-radius: 18px;
-            font-size: 26px;
-            transition: 0.6s ease;
-            color: #ddd;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 28px;
+            transition: all 0.5s ease;
+            text-align: center;
         }
 
         .correct-ans {
-            background: #9c27b0 !important;
-            color: white !important;
-            border-color: white !important;
+            background: #4caf50 !important; /* لون أخضر للنجاح */
+            border-color: #ffffff !important;
             transform: scale(1.05);
-            box-shadow: 0 0 40px #9c27b0;
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
         }
 
-        @keyframes pulse {
+        @keyframes glowPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(156, 39, 176, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 35px rgba(233, 30, 99, 0.8); }
+        }
 
-            0%,
-            100% {
-                transform: scale(1);
-            }
+        .timer-warning {
+            color: #ff5252 !important;
+            animation: blink 0.5s infinite;
+        }
 
-            50% {
-                transform: scale(1.1);
-            }
+        @keyframes blink {
+            50% { opacity: 0.7; }
         }
     </style>
 </head>
 
 <body>
+    <div class="main-background"></div>
     <audio id="beep-snd" src="https://www.soundjay.com/buttons/beep-01a.mp3"></audio>
 
-    <div class="logo-fixed-container">
-        <img src="logo.png" alt="Logo">
-    </div>
+    <div class="logo-fixed-container"><img src="logo.png" alt="Logo"></div>
 
-    <div id="decorations-layer">
-        <img src="ribbon_purple.png" class="ribbon-decor">
-    </div>
-
-    <div id="welcome-overlay">
+    <div id="welcome-overlay" class="screen-layer">
         <div class="welcome-card">
-            <h1 style="font-size: 30px; margin-bottom: 10px;">Challenge Médical de la Journée Mondiale contre le Cancer
-            </h1>
-            <p style="font-size: 20px; color: #e1bee7;">En attente du signal de l'administrateur...</p>
+            <h1 style="font-size:40px; margin-bottom:20px;">Challenge Médical 🎗️</h1>
+            <p style="font-size:24px; color: #fce4ec;">Journée Mondiale contre le Cancer</p>
+            <div style="margin-top: 30px; font-style: italic; opacity: 0.8;">
+                En attente du signal de l'administrateur...
+            </div>
         </div>
     </div>
 
-    <div id="quiz-interface">
+    <div id="quiz-interface" class="screen-layer">
         <div class="timer-container">
-            <svg class="timer-svg">
-                <circle class="circle-progress" id="progress-bar" cx="110" cy="110" r="100"></circle>
-            </svg>
-            <div class="timer-text" id="time-display">60</div>
+            <div class="timer-label" id="timer-status">Préparez-vous</div>
+            <div class="timer-text" id="time-display">01:00</div>
         </div>
+
         <div class="question-glass">
-            <div class="q-text" id="question-text">Préparation...</div>
+            <div class="q-text" id="question-text">Le question s'affichera ici...</div>
             <div class="options-grid" id="options-container"></div>
         </div>
     </div>
@@ -230,8 +211,6 @@
         let currentStatus = "";
         let currentQId = null;
         let timerInterval;
-        let timerStartTime = null;
-        let timerDuration = 60;
         let answerShown = false;
 
         async function syncWithAdmin() {
@@ -240,119 +219,94 @@
                     const res = await fetch(`${dbURL}gameStatus.json`);
                     const data = await res.json();
 
-                    // إظهار واجهة الكويز عند بداية اللعبة
+                    // الانتقال من الترحيب إلى المسابقة
                     if (data.state === 'START_QUIZ' && currentStatus !== 'START_QUIZ') {
                         document.getElementById('welcome-overlay').style.opacity = '0';
-                        document.getElementById('decorations-layer').style.opacity = '0';
                         setTimeout(() => {
                             document.getElementById('welcome-overlay').style.display = 'none';
-                            document.getElementById('quiz-interface').style.display = 'block';
-                            setTimeout(() => document.getElementById('quiz-interface').style.opacity = '1', 50);
-                        }, 1500);
+                            document.getElementById('quiz-interface').classList.add('active');
+                        }, 1000);
                         currentStatus = 'START_QUIZ';
                     }
 
-                    // عرض السؤال الجديد
+                    // تحديث السؤال الجديد
                     if (data.currentQuestion && data.currentQuestion.id !== currentQId) {
                         currentQId = data.currentQuestion.id;
-                        timerStartTime = null;
                         answerShown = false;
                         displayQuestion(data.currentQuestion);
                     }
 
-                    // بداية أو تحديث العد التنازلي المتزامن
+                    // مزامنة الوقت
                     if (data.timerStartTime && currentQId !== null) {
                         const serverStartTime = data.timerStartTime;
-
-                        // إذا كان هذا أول مرة نستقبل وقت البداية، نبدأ العداد
-                        if (timerStartTime !== serverStartTime) {
-                            timerStartTime = serverStartTime;
-                            const question = data.currentQuestion;
-                            if (question) {
-                                startSynchronizedTimer(serverStartTime, 60, question.correctIndex);
-                            }
-                        }
+                        startSynchronizedTimer(serverStartTime, 60, data.currentQuestion.correctIndex);
                     }
-
                 } catch (e) {
-                    console.error('خطأ في المزامنة:', e);
+                    console.error('Sync error:', e);
                 }
-            }, 300); // تحديث أسرع للتزامن الدقيق
+            }, 500);
         }
 
         function displayQuestion(q) {
-            // إيقاف أي عد تنازلي سابق
-            clearInterval(timerInterval);
-
-            // إعادة تعيين العرض
             document.getElementById('question-text').innerText = q.text;
             const container = document.getElementById('options-container');
             container.innerHTML = "";
-
-            // إزالة التنسيق من الإجابات السابقة
-            document.querySelectorAll('.correct-ans').forEach(el => {
-                el.classList.remove('correct-ans');
-            });
-
-            // عرض الخيارات
             q.options.forEach((opt, i) => {
-                const optDiv = document.createElement('div');
-                optDiv.className = 'opt';
-                optDiv.id = `opt-${i}`;
-                optDiv.innerText = opt;
-                container.appendChild(optDiv);
+                const div = document.createElement('div');
+                div.className = 'opt';
+                div.id = `opt-${i}`;
+                div.innerText = opt;
+                container.appendChild(div);
             });
-
-            // إعادة تعيين العداد إلى 60
-            document.getElementById('time-display').innerText = '60';
-            document.getElementById('progress-bar').style.strokeDashoffset = '0';
+            document.getElementById('timer-status').innerText = "Temps Restant";
         }
 
         function startSynchronizedTimer(startTimestamp, duration, correctIdx) {
-            clearInterval(timerInterval);
-            answerShown = false;
+            if (answerShown) return;
 
-            const bar = document.getElementById('progress-bar');
+            clearInterval(timerInterval);
             const display = document.getElementById('time-display');
 
-            function updateTimer() {
-    const now = Date.now();
-    const elapsed = Math.floor((now - startTimestamp) / 1000);
-    const timeLeft = Math.max(0, duration - elapsed);
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = Math.floor((now - startTimestamp) / 1000);
+                const timeLeft = Math.max(0, duration - elapsed);
 
-    // تحديث العرض
-    display.innerText = timeLeft < 10 ? "0" + timeLeft : timeLeft;
-    bar.style.strokeDashoffset     
+                const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const secs = (timeLeft % 60).toString().padStart(2, '0');
+                display.innerText = `${mins}:${secs}`;
 
-    // صوت التنبيه
-    if (timeLeft <= 5 && timeLeft > 0) {
-        document.getElementById('beep-snd').play().catch(() => { });
-    }
+                // تأثيرات الثواني الأخيرة
+                if (timeLeft <= 10) display.classList.add('timer-warning');
+                else display.classList.remove('timer-warning');
 
-    // عند انتهاء الوقت
-    if (timeLeft <= 0 && !answerShown) {
-        clearInterval(timerInterval);
-        answerShown = true;
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    document.getElementById('beep-snd').play().catch(() => {});
+                }
 
-        // إظهار الإجابة الصحيحة بعد 8 ثواني
-        setTimeout(() => {
-            const optElement = document.getElementById(`opt-${correctIdx}`);
-            if (optElement) {
-                optElement.classList.add('correct-ans');
-                confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
+                // انتهاء الوقت وإظهار الإجابة
+                if (timeLeft <= 0 && !answerShown) {
+                    answerShown = true;
+                    clearInterval(timerInterval);
+                    revealAnswer(correctIdx);
+                }
+            }, 100);
+        }
+
+        function revealAnswer(correctIdx) {
+            const optEl = document.getElementById(`opt-${correctIdx}`);
+            if (optEl) {
+                optEl.classList.add('correct-ans');
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#ffffff', '#9c27b0', '#e91e63']
+                });
             }
-        }, 8000);
-    }
-}
-
-
-            // تحديث فوري ثم كل 100 مللي ثانية للدقة
-            updateTimer();
-            timerInterval = setInterval(updateTimer, 100);
         }
 
         syncWithAdmin();
     </script>
 </body>
-
 </html>
