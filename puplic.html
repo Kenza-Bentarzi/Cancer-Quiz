@@ -13,15 +13,15 @@
             font-family: 'Poppins', sans-serif;
             background: url('bg.jpg') no-repeat center center fixed;
             background-size: cover;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow: auto;
             color: white;
         }
 
         /* --- كود اللوغو الدائري المطور --- */
         .logo-fixed-container {
             position: absolute;
-            top: 25px;
+            top: 15px;
             left: 25px;
             z-index: 500;
             display: inline-block;
@@ -81,16 +81,17 @@
             background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(20px);
             transition: 1.5s;
+            min-height: 100vh;
         }
 
         .welcome-card {
             background: rgba(255, 255, 255, 0.05);
-            padding: 60px;
-            border-radius: 50px;
+            padding: 40px 50px;
+            border-radius: 40px;
             border: 1px solid rgba(156, 39, 176, 0.4);
             text-align: center;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-            max-width: 80%;
+            max-width: 65%;
         }
 
         #quiz-interface {
@@ -99,28 +100,29 @@
             transition: 1.5s;
             text-align: center;
             width: 100%;
-            padding-top: 20px;
+            padding: 160px 0 40px 0;
+            min-height: 100vh;
         }
 
         .timer-container {
             position: relative;
-            width: 320px;
-            height: 320px;
-            margin: 0 auto 30px;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 25px;
         }
 
         .timer-svg {
             transform: rotate(-90deg);
-            width: 320px;
-            height: 320px;
+            width: 220px;
+            height: 220px;
         }
 
         .circle-progress {
             fill: none;
             stroke: #e91e63;
-            stroke-width: 16;
+            stroke-width: 12;
             stroke-linecap: round;
-            stroke-dasharray: 1005;
+            stroke-dasharray: 628;
             stroke-dashoffset: 0;
             transition: 1s linear;
         }
@@ -130,26 +132,26 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 100px;
+            font-size: 70px;
             font-weight: 900;
             text-shadow: 0 0 20px rgba(233, 30, 99, 0.5);
         }
 
         .question-glass {
-            width: 80%;
+            width: 65%;
             margin: 0 auto;
-            padding: 40px;
+            padding: 30px;
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(30px);
-            border-radius: 45px;
+            border-radius: 35px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
         }
 
         .q-text {
-            font-size: 38px;
+            font-size: 32px;
             font-weight: 700;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             line-height: 1.3;
         }
 
@@ -160,11 +162,11 @@
         }
 
         .opt {
-            padding: 25px;
+            padding: 20px;
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid rgba(156, 39, 176, 0.3);
-            border-radius: 20px;
-            font-size: 30px;
+            border-radius: 18px;
+            font-size: 26px;
             transition: 0.6s ease;
             color: #ddd;
         }
@@ -204,16 +206,16 @@
 
     <div id="welcome-overlay">
         <div class="welcome-card">
-            <h1 style="font-size: 36px; margin-bottom: 10px;">Challenge Médical de la Journée Mondiale contre le Cancer
+            <h1 style="font-size: 30px; margin-bottom: 10px;">Challenge Médical de la Journée Mondiale contre le Cancer
             </h1>
-            <p style="font-size: 24px; color: #e1bee7;">En attente du signal de l'administrateur...</p>
+            <p style="font-size: 20px; color: #e1bee7;">En attente du signal de l'administrateur...</p>
         </div>
     </div>
 
     <div id="quiz-interface">
         <div class="timer-container">
             <svg class="timer-svg">
-                <circle class="circle-progress" id="progress-bar" cx="160" cy="160" r="150"></circle>
+                <circle class="circle-progress" id="progress-bar" cx="110" cy="110" r="100"></circle>
             </svg>
             <div class="timer-text" id="time-display">60</div>
         </div>
@@ -226,7 +228,11 @@
     <script>
         const dbURL = "https://quiz-game-f3475-default-rtdb.firebaseio.com/";
         let currentStatus = "";
+        let currentQId = null;
         let timerInterval;
+        let timerStartTime = null;
+        let timerDuration = 60;
+        let answerShown = false;
 
         async function syncWithAdmin() {
             setInterval(async () => {
@@ -234,6 +240,7 @@
                     const res = await fetch(`${dbURL}gameStatus.json`);
                     const data = await res.json();
 
+                    // إظهار واجهة الكويز عند بداية اللعبة
                     if (data.state === 'START_QUIZ' && currentStatus !== 'START_QUIZ') {
                         document.getElementById('welcome-overlay').style.opacity = '0';
                         document.getElementById('decorations-layer').style.opacity = '0';
@@ -245,49 +252,105 @@
                         currentStatus = 'START_QUIZ';
                     }
 
-                    if (data.currentQuestion && data.currentQuestion.id !== window.currentQId) {
-                        window.currentQId = data.currentQuestion.id;
-                        renderQuestion(data.currentQuestion);
+                    // عرض السؤال الجديد
+                    if (data.currentQuestion && data.currentQuestion.id !== currentQId) {
+                        currentQId = data.currentQuestion.id;
+                        timerStartTime = null;
+                        answerShown = false;
+                        displayQuestion(data.currentQuestion);
                     }
-                } catch (e) { }
-            }, 1200);
+
+                    // بداية أو تحديث العد التنازلي المتزامن
+                    if (data.timerStartTime && currentQId !== null) {
+                        const serverStartTime = data.timerStartTime;
+
+                        // إذا كان هذا أول مرة نستقبل وقت البداية، نبدأ العداد
+                        if (timerStartTime !== serverStartTime) {
+                            timerStartTime = serverStartTime;
+                            const question = data.currentQuestion;
+                            if (question) {
+                                startSynchronizedTimer(serverStartTime, 60, question.correctIndex);
+                            }
+                        }
+                    }
+
+                } catch (e) {
+                    console.error('خطأ في المزامنة:', e);
+                }
+            }, 300); // تحديث أسرع للتزامن الدقيق
         }
 
-        function renderQuestion(q) {
+        function displayQuestion(q) {
+            // إيقاف أي عد تنازلي سابق
             clearInterval(timerInterval);
+
+            // إعادة تعيين العرض
             document.getElementById('question-text').innerText = q.text;
             const container = document.getElementById('options-container');
             container.innerHTML = "";
-            q.options.forEach((opt, i) => {
-                container.innerHTML += `<div class="opt" id="opt-${i}">${opt}</div>`;
+
+            // إزالة التنسيق من الإجابات السابقة
+            document.querySelectorAll('.correct-ans').forEach(el => {
+                el.classList.remove('correct-ans');
             });
-            startCountdown(60, q.correctIndex);
+
+            // عرض الخيارات
+            q.options.forEach((opt, i) => {
+                const optDiv = document.createElement('div');
+                optDiv.className = 'opt';
+                optDiv.id = `opt-${i}`;
+                optDiv.innerText = opt;
+                container.appendChild(optDiv);
+            });
+
+            // إعادة تعيين العداد إلى 60
+            document.getElementById('time-display').innerText = '60';
+            document.getElementById('progress-bar').style.strokeDashoffset = '0';
         }
 
-        function startCountdown(duration, correctIdx) {
-            let timeLeft = duration;
+        function startSynchronizedTimer(startTimestamp, duration, correctIdx) {
+            clearInterval(timerInterval);
+            answerShown = false;
+
             const bar = document.getElementById('progress-bar');
             const display = document.getElementById('time-display');
 
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                display.innerText = timeLeft < 10 ? "0" + timeLeft : timeLeft;
-                // الداش أراي المحسوب للدائرة هو تقريبا 942 (2 * pi * r)
-                bar.style.strokeDashoffset = 942 - (942 * timeLeft / 60);
+            function updateTimer() {
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTimestamp) / 1000);
+    const timeLeft = Math.max(0, duration - elapsed);
 
-                if (timeLeft <= 5 && timeLeft > 0) {
-                    document.getElementById('beep-snd').play();
-                }
+    // تحديث العرض
+    display.innerText = timeLeft < 10 ? "0" + timeLeft : timeLeft;
+    bar.style.strokeDashoffset     
 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    setTimeout(() => {
-                        document.getElementById(`opt-${correctIdx}`).classList.add('correct-ans');
-                        confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
-                    }, 5000);
-                }
-            }, 1000);
+    // صوت التنبيه
+    if (timeLeft <= 5 && timeLeft > 0) {
+        document.getElementById('beep-snd').play().catch(() => { });
+    }
+
+    // عند انتهاء الوقت
+    if (timeLeft <= 0 && !answerShown) {
+        clearInterval(timerInterval);
+        answerShown = true;
+
+        // إظهار الإجابة الصحيحة بعد 8 ثواني
+        setTimeout(() => {
+            const optElement = document.getElementById(`opt-${correctIdx}`);
+            if (optElement) {
+                optElement.classList.add('correct-ans');
+                confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
+            }
+        }, 8000);
+    }
+}
+
+
+            // تحديث فوري ثم كل 100 مللي ثانية للدقة
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 100);
         }
+
         syncWithAdmin();
     </script>
 </body>

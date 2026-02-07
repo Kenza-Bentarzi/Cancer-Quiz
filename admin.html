@@ -98,8 +98,16 @@
 
         // الأسئلة الـ 10 المقترحة
         const questions = [
-            { id: 1, text: "Quel est l'âge recommandé pour la première mammographie ?", options: ["20 ans", "30 ans", "40 ans", "50 ans"], correctIndex: 2 },
-            { id: 2, text: "L'activité physique réduit le risque de cancer ?", options: ["Vrai", "Faux", "Peu probable", "Aucun lien"], correctIndex: 0 },
+            { id: 1, text: "Parmi les tumeurs suivantes, laquelle est classée comme une tumeur maligne rare ?", options: ["Rhabdomyome", "Rhabdosarcome", "Angiosarcoma ", "Hemangiome capillaire"], correctIndex: 2 },
+            { id: 2, text: "Parmi les tumeurs suivantes, laquelle est histologiquement bénigne mais mal limitée ?", options: [" Mudermoide", " Leïomysarcome", "Adénome tubuleux", "Tératome"], correctIndex: 0 },
+            { id: 3, text: "Quels sont les principaux organes atteints dans la maladie de von Hippel-Lindau ?", options: ["peau , muqueuses , viscères", "rétine , peau , méninges", "peau , méninges", "rétine, cervelet (S.N.C)"], correctIndex: 3 },
+            { id: 4, text: "Quel est le médicament considéré comme le plus utilisé historiquement et de manière globale dans le traitement du cancer ? ", options: ["Methotrexate", " Cisplatine", " Tamoxifène", "Trastuzumab"], correctIndex: 1 },
+            { id: 5, text: "Quelle association est fausse?", options: ["Fibrome → rares mitoses", "Fibromatoes → méstastases", "Fibrosarcome → atypies", "Dermatofibrosarcome → croissance lente"], correctIndex: 1 },
+            { id: 6, text: "Les irradiation ionisantes Provoquent cancers : RF", options: ["cancers thyroïdiens", "cancer des poumons", "leucémies", "cancer de pancréas"], correctIndex: 3 },
+            { id: 7, text: "Quel est le 3ᵉ cancer responsable du plus grand nombre de décès dans le monde ?", options: ["Cancer du sein", "Cancer du foie", "Cancer de la prostate", "Cancer du pancréas"], correctIndex: 1 },
+            { id: 8, text: "parmi les classifications TNM suivantes quelle est la référence pour la stadification définitive de la tumeur et le choix thérapeutique ?", options: ["cTNM.", "uTNM", "pTNM.", "ypTNM."], correctIndex: 2 },
+            { id: 9, text: "Les irradiation ionisantes Provoquent cancers : RF   ", options: ["cancers thyroïdiens", "cancer des poumons", "leucémies", "cancer de pancréas"], correctIndex: 3 },
+            { id: 10, text: "À propos du Molluscum pendulum, laquelle est FAUSSE ?", options: ["C’est une tumeur bénigne du tissu conjonctif", " Il est formé par une prolifération de fibroblastes", " Il est dur et fixe à la peau", " Il est mou et pédiculé"], correctIndex: 2 },
             // يمكنك إضافة باقي الأسئلة هنا بنفس التنسيق
         ];
 
@@ -118,10 +126,16 @@
         async function sendNextQuestion() {
             if (currentQIndex < questions.length) {
                 const questionData = questions[currentQIndex];
+
+                // إرسال السؤال مع وقت بداية العد التنازلي
                 await fetch(`${dbURL}gameStatus.json`, {
                     method: 'PATCH',
-                    body: JSON.stringify({ currentQuestion: questionData })
+                    body: JSON.stringify({
+                        currentQuestion: questionData,
+                        timerStartTime: Date.now() // إضافة timestamp للتزامن
+                    })
                 });
+
                 document.getElementById('status-txt').innerText = "تم إرسال السؤال رقم: " + (currentQIndex + 1);
                 currentQIndex++;
             } else {
